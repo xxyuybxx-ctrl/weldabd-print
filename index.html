@@ -25,7 +25,7 @@
   --fs-xs:12.5px; --fs-sm:14px; --fs-md:16px; --fs-lg:23px;
 }
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-sm);line-height:1.6;--accent:var(--glp);--accent-wash:var(--glp-wash)}
-body[data-ver="dm"],body[data-ver="gdm"]{--accent:var(--dm);--accent-wash:var(--dm-wash)}
+body[data-ver="dm"]{--accent:var(--dm);--accent-wash:var(--dm-wash)}
 *{box-sizing:border-box}
 
 .app{max-width:1120px;margin-inline:auto;padding-inline:20px;padding-block:28px 48px;display:grid;grid-template-columns:minmax(0,350px) minmax(0,1fr);gap:40px;align-items:start}
@@ -104,7 +104,6 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
         <label class="ver"><input type="radio" name="ver" id="ver-glp" value="glp" checked><b>비만주사 (GLP-1)</b><span>비만주사 치료 환자용</span></label>
         <div class="minis">
           <label class="ver ver-mini"><input type="radio" name="ver" id="ver-dm" value="dm">전당뇨ver</label>
-          <label class="ver ver-mini"><input type="radio" name="ver" id="ver-gdm" value="gdm">임신성당뇨ver</label>
         </div>
       </div>
     </fieldset>
@@ -156,10 +155,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
          qr:{x0:27.12,y0:744.24,x1:102.0,y1:819.6}, qrBg:[232,240,250]},
     dm: {name:'전당뇨·당뇨 생활습관 가이드', file:'당뇨', pdf:'assets/dm.pdf', front:'assets/dm_front.jpg', back:'assets/dm_back.jpg',
          pw:594.96, ph:841.92, box:{x0:372.0,x1:559.2,y0:750.72,y1:825.6}, labelBottom:770.88,
-         qr:{x0:44.4,y0:759.12,x1:102.72,y1:817.44}, qrBg:[250,250,250]},
-    gdm:{name:'임신성당뇨 생활습관 가이드', file:'임신성당뇨', pdf:'assets/gdm.pdf', front:'assets/gdm_front.jpg', back:'assets/gdm_back.jpg',
-         pw:594.96, ph:841.92, box:{x0:372.0,x1:559.2,y0:750.72,y1:825.6}, labelBottom:770.16,
-         qr:null}   // 웰다Y QR이 이미 들어 있음
+         qr:{x0:44.4,y0:759.12,x1:102.72,y1:817.44}, qrBg:[250,250,250]}
   };
   var QR_SRC = 'assets/qr_welday.png';
 
@@ -168,7 +164,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
   var fctx = front.getContext('2d'), zctx = zoom.getContext('2d');
   var state = { ver:'glp', code:'' };
   var imgs = {};
-  ['glp','dm','gdm'].forEach(function(k){ var im = new Image(); im.onload = function(){ if(state.ver===k) draw(); }; im.src = VERS[k].front; imgs[k] = im; });
+  ['glp','dm'].forEach(function(k){ var im = new Image(); im.onload = function(){ if(state.ver===k) draw(); }; im.src = VERS[k].front; imgs[k] = im; });
 
   function codeText(){ return state.code.replace(/\s+/g,' ').trim(); }
 
@@ -220,7 +216,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
     refresh();
   }
   codeEl.addEventListener('input', function(){ state.code = codeEl.value; say(''); refresh(); });
-  ['ver-glp','ver-dm','ver-gdm'].forEach(function(id){
+  ['ver-glp','ver-dm'].forEach(function(id){
     $(id).addEventListener('change', function(e){
       if(!e.target.checked) return;
       say(''); setVer(e.target.value);
