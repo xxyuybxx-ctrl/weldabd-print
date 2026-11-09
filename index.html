@@ -124,6 +124,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
       <div class="actions">
         <button class="btn" id="btn-print" type="button">바로 인쇄</button>
         <button class="btn" id="btn-pdf" type="button">PDF 저장</button>
+        <button class="btn ghost" id="btn-a3" type="button" hidden>A3 포스터 PDF (앞면만)</button>
       </div>
       <p class="notice">앞장과 뒷장의 상단·하단 위치가 동일하도록 양면으로 인쇄하세요.</p>
       <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -221,6 +222,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
   function setVer(k){
     state.ver = k; document.body.dataset.ver = k;
     $('front-cap').textContent = VERS[k].name; $('back').src = VERS[k].back;
+    var a3 = $('btn-a3'); if(a3) a3.hidden = (k !== 'yoyo');
     refresh();
   }
   codeEl.addEventListener('input', function(){ state.code = codeEl.value; say(''); refresh(); });
@@ -274,6 +276,27 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
       });
     }).then(function(bytes){ return new Blob([bytes], { type:'application/pdf' }); });
   }
+  // A3 포스터: 앞면 1장만, A4 원본을 √2배 확대
+  function buildA3(){
+    var v = VERS[state.ver], t = codeText();
+    if(!window.PDFLib) return Promise.reject({ code:'no_lib' });
+    var L = window.PDFLib, W3 = 841.89, H3 = 1190.55, k = W3 / v.pw;
+    return Promise.all([getBytes(v.pdf), t ? codePng(v, t) : null]).then(function(a){
+      return L.PDFDocument.load(a[0]).then(function(src){
+        return L.PDFDocument.create().then(function(out){
+          return out.embedPage(src.getPage(0)).then(function(emb){
+            var p = out.addPage([W3, H3]);
+            p.drawPage(emb, { x:0, y:H3 - v.ph * k, xScale:k, yScale:k });
+            return (a[1] ? out.embedPng(a[1]) : Promise.resolve(null)).then(function(img){
+              if(img){ var r = textRect(v); p.drawImage(img, { x:r.x * k, y:H3 - (r.y + r.h) * k, width:r.w * k, height:r.h * k }); }
+              out.setTitle('웰다 ' + v.file + ' A3 포스터' + (t ? ' - ' + t : ''));
+              return out.save();
+            });
+          });
+        });
+      });
+    }).then(function(bytes){ return new Blob([bytes], { type:'application/pdf' }); });
+  }
   function fileName(){
     var t = codeText().replace(/[\\\/:*?"<>|\[\]]/g,'').trim();
     return '웰다_' + VERS[state.ver].file + '_' + (t || '코드없음') + '.pdf';
@@ -309,6 +332,24 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
       say('PDF를 저장했습니다. 파일을 열어 양면으로 인쇄하세요.');
     }).catch(function(e){ var m = errMsg(e); say(m[0], m[1]); })
       .then(function(){ btnPdf.disabled = false; });
+  });
+
+  var btnA3 = $('btn-a3');
+  btnA3.addEventListener('click', function(){
+    btnA3.disabled = true; say('A3 포스터 PDF를 만드는 중입니다.');
+    ensureFont().then(buildA3).then(function(blob){
+      var name = fileName().replace(/\.pdf$/, '_A3포스터.pdf');
+      if(STANDALONE){
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 60000);
+        return;
+      }
+      return downloads.then(function(d){ if(!d) throw { code:'unavailable' }; return d.save({ filename:name, data:blob }); });
+    }).then(function(){
+      say('A3 포스터 PDF를 저장했습니다. 용지 A3, 단면, 실제 크기(100%)로 인쇄하세요.');
+    }).catch(function(e){ var m = errMsg(e); say(m[0], m[1]); })
+      .then(function(){ btnA3.disabled = false; });
   });
 
   var btnPrint = $('btn-print'), frame = $('print-frame'), lastUrl = null;
