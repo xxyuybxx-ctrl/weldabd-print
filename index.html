@@ -25,7 +25,7 @@
   --fs-xs:12.5px; --fs-sm:14px; --fs-md:16px; --fs-lg:23px;
 }
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-sm);line-height:1.6;--accent:var(--glp);--accent-wash:var(--glp-wash)}
-body[data-ver="dm"],body[data-ver="gdm"]{--accent:var(--dm);--accent-wash:var(--dm-wash)}
+body[data-ver="dm"],body[data-ver="gdm"],body[data-ver="yoyo"]{--accent:var(--dm);--accent-wash:var(--dm-wash)}
 *{box-sizing:border-box}
 
 .app{max-width:1120px;margin-inline:auto;padding-inline:20px;padding-block:28px 48px;display:grid;grid-template-columns:minmax(0,350px) minmax(0,1fr);gap:40px;align-items:start}
@@ -40,7 +40,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
 .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--paper);font-size:var(--fs-xs);font-weight:800;font-variant-numeric:tabular-nums}
 
 .vers{display:flex;flex-direction:column;align-items:stretch;gap:6px}
-.minis{display:flex;justify-content:flex-end;gap:6px}
+.minis{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
 .ver.ver-mini{flex-direction:row;padding:5px 12px;border:1px solid var(--line);border-radius:8px;background:var(--wash);font-size:12.5px;color:var(--muted);font-weight:600}
 .ver.ver-mini:hover{border-color:var(--muted);color:var(--ink)}
 .ver.ver-mini:has(input:checked){border-color:var(--accent);background:var(--accent-wash);color:var(--accent);font-weight:700}
@@ -105,6 +105,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
         <div class="minis">
           <label class="ver ver-mini"><input type="radio" name="ver" id="ver-dm" value="dm">전당뇨ver</label>
           <label class="ver ver-mini"><input type="radio" name="ver" id="ver-gdm" value="gdm">임신성당뇨ver</label>
+          <label class="ver ver-mini"><input type="radio" name="ver" id="ver-yoyo" value="yoyo">비만요요ver</label>
         </div>
       </div>
     </fieldset>
@@ -159,7 +160,10 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
          qr:{x0:44.4,y0:759.12,x1:102.72,y1:817.44}, qrBg:[250,250,250]},
     gdm:{name:'임신성당뇨 생활습관 가이드', file:'임신성당뇨', pdf:'assets/gdm.pdf', front:'assets/gdm_front.jpg', back:'assets/gdm_back.jpg',
          pw:594.96, ph:841.92, box:{x0:372.0,x1:559.2,y0:750.72,y1:825.6}, labelBottom:770.16,
-         qr:null}   // 웰다Y QR이 이미 들어 있음
+         qr:null},   // 웰다Y QR이 이미 들어 있음
+    yoyo:{name:'비만 치료 후 요요 예방 포스터', file:'비만요요', pdf:'assets/yoyo.pdf', front:'assets/yoyo_front.jpg', back:'assets/yoyo_back.jpg',
+         pw:595.28, ph:841.89, box:{x0:376.7,x1:568.83,y0:745.63,y1:821.24}, labelBottom:770.64,
+         qr:null}    // 웰다Y QR이 이미 들어 있음
   };
   var QR_SRC = 'assets/qr_welday.png';
 
@@ -168,7 +172,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
   var fctx = front.getContext('2d'), zctx = zoom.getContext('2d');
   var state = { ver:'glp', code:'' };
   var imgs = {};
-  ['glp','dm','gdm'].forEach(function(k){ var im = new Image(); im.onload = function(){ if(state.ver===k) draw(); }; im.src = VERS[k].front; imgs[k] = im; });
+  ['glp','dm','gdm','yoyo'].forEach(function(k){ var im = new Image(); im.onload = function(){ if(state.ver===k) draw(); }; im.src = VERS[k].front; imgs[k] = im; });
 
   function codeText(){ return state.code.replace(/\s+/g,' ').trim(); }
 
@@ -220,7 +224,7 @@ h1{margin:0;font-size:var(--fs-lg);font-weight:800;line-height:1.3;letter-spacin
     refresh();
   }
   codeEl.addEventListener('input', function(){ state.code = codeEl.value; say(''); refresh(); });
-  ['ver-glp','ver-dm','ver-gdm'].forEach(function(id){
+  ['ver-glp','ver-dm','ver-gdm','ver-yoyo'].forEach(function(id){
     $(id).addEventListener('change', function(e){
       if(!e.target.checked) return;
       say(''); setVer(e.target.value);
