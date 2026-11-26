@@ -296,7 +296,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
                                 : '앞장과 뒷장의 상단·하단 위치가 같도록 양면으로 인쇄하세요.';
     var sp = f ? [['A4 가로'],['양면'],['짧은 쪽 넘김',1],['반으로 접기']] : [['A4 세로'],['양면'],['긴 쪽 넘김',1]];
     ['spec'].forEach(function(id){ $(id).innerHTML = sp.map(function(s){ return '<li' + (s[1] ? ' class="hl"' : '') + '>' + s[0] + '</li>'; }).join(''); });
-    var a3 = $('btn-a3'); if(a3) a3.hidden = (k !== 'yoyo');
+    var a3 = $('btn-a3'); if(a3) a3.hidden = (k !== 'yoyo' && k !== 'dm');
     refresh();
   }
   var clearEl = $('clear'), recentEl = $('recent');
@@ -408,13 +408,19 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
     var v = VERS[state.ver], t = codeText();
     if(!window.PDFLib) return Promise.reject({ code:'no_lib' });
     var L = window.PDFLib, W3 = 841.89, H3 = 1190.55, k = W3 / v.pw;
-    return Promise.all([getBytes(v.pdf), t ? codePng(v, t) : null]).then(function(a){
+    return Promise.all([getBytes(v.pdf), t ? codePng(v, t) : null, v.qr ? getBytes(QR_SRC) : null]).then(function(a){
       return L.PDFDocument.load(a[0]).then(function(src){
         return L.PDFDocument.create().then(function(out){
           return out.embedPage(src.getPage(0)).then(function(emb){
             var p = out.addPage([W3, H3]);
             p.drawPage(emb, { x:0, y:H3 - v.ph * k, xScale:k, yScale:k });
-            return (a[1] ? out.embedPng(a[1]) : Promise.resolve(null)).then(function(img){
+            return Promise.all([a[1] ? out.embedPng(a[1]) : null, a[2] ? out.embedPng(a[2]) : null]).then(function(im){
+              var img = im[0], q = v.qr;
+              if(q && im[1]){   // 웰다Y QR로 교체 (A4 버전과 동일)
+                var pad = 3, bg = v.qrBg;
+                p.drawRectangle({ x:(q.x0 - pad) * k, y:H3 - (q.y1 + pad) * k, width:(q.x1 - q.x0 + pad * 2) * k, height:(q.y1 - q.y0 + pad * 2) * k, color:L.rgb(bg[0]/255, bg[1]/255, bg[2]/255) });
+                p.drawImage(im[1], { x:q.x0 * k, y:H3 - q.y1 * k, width:(q.x1 - q.x0) * k, height:(q.y1 - q.y0) * k });
+              }
               if(img){ var r = textRect(v); p.drawImage(img, { x:r.x * k, y:H3 - (r.y + r.h) * k, width:r.w * k, height:r.h * k }); }
               out.setTitle('웰다 ' + v.file + ' A3 포스터' + (t ? ' - ' + t : ''));
               return out.save();
