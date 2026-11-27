@@ -25,7 +25,7 @@
   --fs-xs:13.5px; --fs-sm:15px; --fs-md:17px; --fs-lg:26px;
 }
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-sm);line-height:1.6;--accent:var(--glp);--accent-wash:var(--glp-wash)}
-body[data-ver="dm"],body[data-ver="gdm"],body[data-ver="yoyo"]{--accent:var(--dm);--accent-wash:var(--dm-wash)}
+body[data-ver="dm"],body[data-ver="gdm"],body[data-ver="yoyo"],body[data-ver="yoyo2"]{--accent:var(--dm);--accent-wash:var(--dm-wash)}
 *{box-sizing:border-box}
 
 .app{max-width:1180px;margin-inline:auto;padding-inline:24px;padding-block:32px 56px;display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:36px;align-items:start}
@@ -138,6 +138,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
           <label class="ver"><input type="radio" name="ver" id="ver-glp" value="glp" checked><span class="thumb"><img src="assets/glp_front.jpg" alt="" loading="lazy"></span><b>비만주사 (GLP‑1)</b><span>비만주사 치료 환자용</span></label>
           <label class="ver"><input type="radio" name="ver" id="ver-yoyo" value="yoyo"><span class="thumb"><img src="assets/yoyo_front.jpg" alt="" loading="lazy"></span><b>비만요요</b><span>치료 후 요요 예방</span></label>
           <label class="ver"><input type="radio" name="ver" id="ver-fold" value="fold"><span class="thumb"><img src="assets/yoyo_front.jpg" alt="" loading="lazy"><img src="assets/glp_front.jpg" alt="" loading="lazy"></span><b>비만주사+요요 2단</b><span>A4 가로 반접기</span></label>
+          <label class="ver"><input type="radio" name="ver" id="ver-yoyo2" value="yoyo2"><span class="thumb"><img src="assets/yoyo2_front.jpg" alt="" loading="lazy" style="object-position:bottom"></span><b>비만요요 상담</b><span>코드 없는 포스터</span></label>
         </div></div>
         <div class="group"><span class="group-label">당뇨</span><div class="cards">
           <label class="ver"><input type="radio" name="ver" id="ver-dm" value="dm"><span class="thumb"><img src="assets/dm_front.jpg" alt="" loading="lazy"></span><b>전당뇨</b><span>전당뇨·당뇨 환자용</span></label>
@@ -214,6 +215,9 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
     yoyo:{name:'비만 치료 후 요요 예방 포스터', file:'비만요요', pdf:'assets/yoyo.pdf', front:'assets/yoyo_front.jpg', back:'assets/yoyo_back.jpg',
          pw:595.28, ph:841.89, box:{x0:376.7,x1:568.83,y0:745.63,y1:821.24}, labelBottom:770.64,
          qr:null},   // 웰다Y QR이 이미 들어 있음
+    // 하단이 「지금 바로 진료실에서 상담하세요」인 요요 포스터: QR·파트너코드 칸 없음
+    yoyo2:{name:'비만요요 포스터 (진료실 상담)', file:'비만요요_진료실상담', pdf:'assets/yoyo2.pdf', front:'assets/yoyo2_front.jpg', back:'assets/yoyo2_back.jpg',
+         pw:595.28, ph:841.89, box:null, qr:null, nocode:true},
     // A4 가로 2단 접지: 바깥면 [뒤표지(빈칸) | 표지 비만요요], 안쪽면 [비만주사 가이드 | 앱 설치 가이드]
     fold:{name:'뒤표지(빈칸) | 표지: 비만요요', back:'비만주사 가이드 | 앱 설치 가이드', file:'2단리플렛', fold:true}
   };
@@ -224,7 +228,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
   var fctx = front.getContext('2d'), zctx = zoom.getContext('2d');
   var state = { ver:'glp', code:'' };
   var imgs = {};
-  ['glp','dm','gdm','yoyo'].forEach(function(k){ var im = new Image(); im.onload = function(){ if(state.ver===k || state.ver==='fold') draw(); }; im.src = VERS[k].front; imgs[k] = im; });
+  ['glp','dm','gdm','yoyo','yoyo2'].forEach(function(k){ var im = new Image(); im.onload = function(){ if(state.ver===k || state.ver==='fold') draw(); }; im.src = VERS[k].front; imgs[k] = im; });
   var glpBack = new Image(); glpBack.onload = function(){ if(state.ver==='fold') draw(); }; glpBack.src = VERS.glp.back;
 
   function codeText(){ return state.code.replace(/\s+/g,' ').trim(); }
@@ -285,6 +289,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
     fctx.imageSmoothingQuality = 'high';
     fctx.drawImage(im, 0, 0, front.width, front.height);
     var t = codeText();
+    if(!v.box) return;
     if(t){ var r = textRect(v); paintCode(fctx, r.x * s, r.y * s, r.w * s, r.h * s, t); }
     var b = v.box;
     var cx0 = Math.max(0, b.x0 - 18), cx1 = Math.min(v.pw, b.x1 + 18), cy0 = b.y0 - 12, cy1 = Math.min(v.ph, b.y1 + 12);
@@ -314,7 +319,13 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
                                 : '앞장과 뒷장의 상단·하단 위치가 같도록 양면으로 인쇄하세요.';
     var sp = f ? [['A4 가로'],['양면'],['짧은 쪽 넘김',1],['반으로 접기']] : [['A4 세로'],['양면'],['긴 쪽 넘김',1]];
     ['spec'].forEach(function(id){ $(id).innerHTML = sp.map(function(s){ return '<li' + (s[1] ? ' class="hl"' : '') + '>' + s[0] + '</li>'; }).join(''); });
-    var a3 = $('btn-a3'); if(a3) a3.hidden = (k !== 'yoyo' && k !== 'dm');
+    var a3 = $('btn-a3'); if(a3) a3.hidden = (k !== 'yoyo' && k !== 'dm' && k !== 'yoyo2');
+    var nc = !!VERS[k].nocode;
+    document.querySelector('.zoom').hidden = nc;
+    if(nc){
+      $('notice').textContent = '이 포스터에는 파트너코드 칸이 없어 코드가 들어가지 않습니다. 「A3 포스터 PDF」로 저장해 A3로 인쇄하세요.';
+      $('spec').innerHTML = '<li>A3</li><li>단면</li><li class="hl">실제 크기(100%)</li>';
+    }
     refresh();
   }
   var clearEl = $('clear'), recentEl = $('recent');
@@ -378,7 +389,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
   });
   resEl.addEventListener('mousedown', function(e){ var li = e.target.closest('li[data-i]'); if(li){ e.preventDefault(); pick(+li.dataset.i); } });
   document.addEventListener('click', function(e){ if(!e.target.closest('.finder')) closeRes(); });
-  ['ver-glp','ver-dm','ver-gdm','ver-yoyo','ver-fold'].forEach(function(id){
+  ['ver-glp','ver-dm','ver-gdm','ver-yoyo','ver-fold','ver-yoyo2'].forEach(function(id){
     $(id).addEventListener('change', function(e){
       if(!e.target.checked) return;
       say(''); setVer(e.target.value);
@@ -441,7 +452,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
     var v = VERS[state.ver], t = codeText();
     if(!window.PDFLib) return Promise.reject({ code:'no_lib' });
     var L = window.PDFLib;
-    return Promise.all([getBytes(v.pdf), getBytes(QR_SRC), t ? codePng(v, t) : null]).then(function(a){
+    return Promise.all([getBytes(v.pdf), getBytes(QR_SRC), t && v.box ? codePng(v, t) : null]).then(function(a){
       return L.PDFDocument.load(a[0]).then(function(src){
         return L.PDFDocument.create().then(function(out){
           return out.copyPages(src, [0, 1]).then(function(pages){
@@ -467,7 +478,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
     var v = VERS[state.ver], t = codeText();
     if(!window.PDFLib) return Promise.reject({ code:'no_lib' });
     var L = window.PDFLib, W3 = 841.89, H3 = 1190.55, k = W3 / v.pw;
-    return Promise.all([getBytes(v.pdf), t ? codePng(v, t) : null, v.qr ? getBytes(QR_SRC) : null]).then(function(a){
+    return Promise.all([getBytes(v.pdf), t && v.box ? codePng(v, t) : null, v.qr ? getBytes(QR_SRC) : null]).then(function(a){
       return L.PDFDocument.load(a[0]).then(function(src){
         return L.PDFDocument.create().then(function(out){
           return out.embedPage(src.getPage(0)).then(function(emb){
@@ -491,6 +502,7 @@ body[data-ver="fold"] .sheet canvas,body[data-ver="fold"] .sheet img{aspect-rati
   }
   function fileName(){
     var t = codeText().replace(/[\\\/:*?"<>|\[\]]/g,'').trim();
+    if(VERS[state.ver].nocode) return '웰다_' + VERS[state.ver].file + '.pdf';
     return '웰다_' + VERS[state.ver].file + '_' + (t || '코드없음') + '.pdf';
   }
   function errMsg(e){
